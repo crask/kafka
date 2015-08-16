@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wvanbergen/kazoo-go"
 	"github.com/Shopify/sarama"
+	"github.com/wvanbergen/kazoo-go"
 )
 
 var (
@@ -361,7 +361,7 @@ func (cg *ConsumerGroup) partitionConsumer(topic string, partition int32, messag
 		return
 	}
 
-	if nextOffset > 0 {
+	if nextOffset >= 0 {
 		cg.Logf("%s/%d :: Partition consumer starting at offset %d.\n", topic, partition, nextOffset)
 	} else {
 		nextOffset = cg.config.Offsets.Initial
