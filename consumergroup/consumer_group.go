@@ -354,11 +354,11 @@ func (cg *ConsumerGroup) partitionConsumer(topic string, partition int32, messag
 	default:
 	}
 
-	for maxRetries, tries := 3, 0; tries < maxRetries; tries++ {
+	for maxRetries, tries := 5, 0; tries < maxRetries; tries++ {
 		if err := cg.instance.ClaimPartition(topic, partition); err == nil {
 			break
 		} else if err == kazoo.ErrPartitionClaimedByOther && tries+1 < maxRetries {
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Duration(5*tries) * time.Second)
 		} else {
 			cg.Logf("%s/%d :: FAILED to claim the partition: %s\n", topic, partition, err)
 			return
