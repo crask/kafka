@@ -289,17 +289,17 @@ func (cg *ConsumerGroup) topicListConsumer(topics []string) {
 
 		leftRespawnCount := len(topics) * 3
 
-topicConsumerRespawnLoop:
+	topicConsumerRespawnLoop:
 		for {
 			if leftRespawnCount--; leftRespawnCount <= 0 {
-				cg.Logf("Too many topicConsumer respawn for topics: %b\n", topics)
+				cg.Logf("Too many topicConsumer respawn for topics: %v\n", topics)
 				cg.Close()
 			}
 
 			select {
 			case idx := <-event:
 				if leftRespawnCount > 0 {
-					cg.Logf("Try respawn exit topicConsumer: %s\n", topics[idx])
+					cg.Logf("Try respawn exited topicConsumer: %s\n", topics[idx])
 					cg.wg.Add(1)
 					go func(idx int) {
 						defer func() {
@@ -386,7 +386,7 @@ partitionConsumerRespawnLoop:
 		select {
 		case idx := <-event:
 			if leftRespawnCount > 0 {
-				cg.Logf("%s/%d :: Try respawn exit partitionConsumer\n", topic, myPartitions[idx].ID)
+				cg.Logf("%s/%d :: Try respawn exited partitionConsumer\n", topic, myPartitions[idx].ID)
 				wg.Add(1)
 				go func(idx int, pid *kazoo.Partition) {
 					defer func() {
