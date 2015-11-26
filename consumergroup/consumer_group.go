@@ -301,12 +301,12 @@ topicConsumerRespawnLoop:
 				if leftRespawnCount > 0 {
 					cg.Logf("Try respawn exit topicConsumer: %s\n", topics[idx])
 					cg.wg.Add(1)
-					go func() {
+					go func(idx int) {
 						defer func() {
 							event <- idx
 						}()
 						cg.topicConsumer(topics[idx], cg.messages, cg.errors, stopper)
-					}()
+					}(idx)
 				}
 			case <-cg.stopper:
 				close(stopper)
