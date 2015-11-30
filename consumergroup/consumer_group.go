@@ -277,25 +277,25 @@ func (cg *ConsumerGroup) topicListConsumer(topics []string) {
 		stopper := make(chan struct{})
 		event := make(chan int)
 
-		for idx, topic := range topics {
-			cg.wg.Add(1)
-			go func(idx int, topic string) {
-				defer func() {
-					event <- idx
-				}()
-				cg.topicConsumer(topic, cg.messages, cg.errors, stopper)
-			}(idx, topic)
+		if registered, err := cg.InstanceRegistered(); registered && nil == err {
+			for idx, topic := range topics {
+				cg.wg.Add(1)
+				go func(idx int, topic string) {
+					defer func() {
+						event <- idx
+					}()
+					cg.topicConsumer(topic, cg.messages, cg.errors, stopper)
+				}(idx, topic)
+			}
+		} else {
+			cg.Logf("Consumer instance lost\n")
+			cg.Close()
 		}
 
 		leftRespawnCount := len(topics) * 3
 
 	topicConsumerRespawnLoop:
 		for {
-			if leftRespawnCount--; leftRespawnCount <= 0 {
-				cg.Logf("Too many topicConsumer respawn for topics: %v\n", topics)
-				cg.Close()
-			}
-
 			select {
 			case idx := <-event:
 				if leftRespawnCount > 0 {
@@ -317,6 +317,11 @@ func (cg *ConsumerGroup) topicListConsumer(topics []string) {
 				close(stopper)
 				cg.wg.Wait()
 				break topicConsumerRespawnLoop
+			}
+
+			if leftRespawnCount--; leftRespawnCount <= 0 {
+				cg.Logf("Too many topicConsumer respawn for topics: %v\n", topics)
+				cg.Close()
 			}
 		}
 	}
@@ -378,11 +383,6 @@ func (cg *ConsumerGroup) topicConsumer(topic string, messages chan<- *sarama.Con
 
 partitionConsumerRespawnLoop:
 	for {
-		if leftRespawnCount--; leftRespawnCount <= 0 {
-			cg.Logf("%s :: Too many partitionConsumer respawn\n", topic)
-			close(partitionStopper)
-			break partitionConsumerRespawnLoop
-		}
 		select {
 		case idx := <-event:
 			if leftRespawnCount > 0 {
@@ -396,6 +396,12 @@ partitionConsumerRespawnLoop:
 				}(idx, myPartitions[idx])
 			}
 		case <-stopper:
+			close(partitionStopper)
+			break partitionConsumerRespawnLoop
+		}
+
+		if leftRespawnCount--; leftRespawnCount <= 0 {
+			cg.Logf("%s :: Too many partitionConsumer respawn\n", topic)
 			close(partitionStopper)
 			break partitionConsumerRespawnLoop
 		}
