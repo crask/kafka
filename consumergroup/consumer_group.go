@@ -258,6 +258,8 @@ func (cg *ConsumerGroup) CommitUpto(message *sarama.ConsumerMessage) error {
 }
 
 func (cg *ConsumerGroup) topicListConsumer(topics []string) {
+	cg.Logf("Wait for 5 seconds to avoid consumer start rebalance herd")
+	time.Sleep(5 * time.Second)
 	for {
 		select {
 		case <-cg.stopper:
@@ -316,6 +318,8 @@ func (cg *ConsumerGroup) topicListConsumer(topics []string) {
 				cg.Logf("Triggering rebalance due to consumer list change\n")
 				close(stopper)
 				cg.wg.Wait()
+				cg.Logf("Waiting for 5 seconds to avoid consumer inflight rebalance herd")
+				time.Sleep(5 * time.Second)
 				break topicConsumerRespawnLoop
 			}
 
